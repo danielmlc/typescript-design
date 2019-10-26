@@ -1,0 +1,15 @@
+{
+  "name": "typescript-design",
+  "version": "1.0.0",
+  "description": "设计模式 typescript版本",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "design",
+    "partterns"
+  ],
+  "author": "danielmlc",
+  "license": "ISC"
+}
