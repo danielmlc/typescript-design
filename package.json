@@ -1,15 +1,26 @@
 {
-  "name": "typescript-design",
-  "version": "1.0.0",
-  "description": "设计模式 typescript版本",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "design",
-    "partterns"
-  ],
-  "author": "danielmlc",
-  "license": "ISC"
+    "name": "typescript-design",
+    "version": "1.0.0",
+    "description": "设计模式 typescript版本",
+    "main": "index.js",
+    "scripts": {
+        "eslint": "eslint src --ext .js,.jsx,.ts,.tsx,.vue",
+        "prettier": "prettier src -l \"./**/*\"",
+        "prettier:fix": "prettier src --write -l \"./**/*\"",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "design",
+        "partterns"
+    ],
+    "author": "danielmlc",
+    "license": "ISC",
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^2.5.0",
+        "@typescript-eslint/parser": "^2.5.0",
+        "eslint": "^6.6.0",
+        "eslint-config-alloy": "^3.0.0",
+        "prettier": "^1.18.2",
+        "typescript": "^3.6.4"
+    }
 }
