@@ -1,5 +1,6 @@
 import { MallardDuck } from './MallardDuck'
-
-const mallardDuck = new MallardDuck()
+import { Duck } from './Duck'
+const mallardDuck:Duck = new MallardDuck()
 mallardDuck.duckQuack()
 mallardDuck.duckFly()
+
