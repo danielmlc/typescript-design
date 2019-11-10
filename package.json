@@ -8,8 +8,8 @@
     "prettier": "prettier src -l \"./**/*\"",
     "prettier:fix": "prettier src --write -l \"./**/*\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc src/strategy-pattern/index.ts",
-    "dev": "nodemon src/strategy-pattern/index.js"
+    "build": "tsc src/observer-pattern/index.ts",
+    "dev": "nodemon src/observer-pattern/index.js"
   },
   "keywords": [
     "design",
