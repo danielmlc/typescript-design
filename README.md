@@ -1,17 +1,17 @@
 #### 设计模式
 
-[x] [策略模式](src/strategy-pattern/index.md)
-[x] [观察者模式](src/observer-pattern/index.md)
-[x] [装饰者模式](src/decorator-pattern/index.md)
-[ ] [工厂模式]()
-[ ] [单件模式]()
-[ ] [命令模式]()
-[ ] [适配器与外观模式]()
-[ ] [模板方法模式]()
-[ ] [迭代器与组合模式]()
-[ ] [状态模式]()
-[ ] [代理模式]()
-[ ] [复合模式]()
+- [x] [策略模式](src/strategy-pattern/index.md)
+- [x] [观察者模式](src/observer-pattern/index.md)
+- [x] [装饰者模式](src/decorator-pattern/index.md)
+- [ ] [工厂模式]()
+- [ ] [单件模式]()
+- [ ] [命令模式]()
+- [ ] [适配器与外观模式]()
+- [ ] [模板方法模式]()
+- [ ] [迭代器与组合模式]()
+- [ ] [状态模式]()
+- [ ] [代理模式]()
+- [ ] [复合模式]()
 
 
 
