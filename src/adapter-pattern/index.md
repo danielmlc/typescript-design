@@ -21,19 +21,65 @@
 
 这样一来，你的客户端代码就可以像对待 `PayPalService` 一样对待 `AlipayAdapter`，而无需知道背后复杂的转换逻辑。
 
-## structure
+## 结构
 
 1.  **目标 (Target)**: (`PaymentProcessor` 接口)
     *   定义了客户端代码所使用的特定于领域的接口。
+    ```typescript
+    // src/adapter-pattern/target/payment-processor.ts
+    export interface PaymentProcessor {
+      pay(amount: number): void;
+    }
+    ```
 
-2.  **客户端 (Client)**: (`processPayment` 函数)
-    *   与实现了 `Target` 接口的对象进行交互。
-
-3.  **被适配者 (Adaptee)**: (`AlipayService` 类)
+2.  **被适配者 (Adaptee)**: (`AlipayService` 类)
     *   一个现有的类，其接口与 `Target` 接口不兼容。我们无法修改这个类。
+    ```typescript
+    // src/adapter-pattern/adaptee/alipay-service.ts
+    export class AlipayService {
+      public makePayment(user: string, amountInCents: number): void {
+        console.log(`User ${user} is paying ${amountInCents / 100} CNY via Alipay.`);
+      }
+    }
+    ```
 
-4.  **适配器 (Adapter)**: (`AlipayAdapter` 类)
+3.  **适配器 (Adapter)**: (`AlipayAdapter` 类)
     *   一个可以同时与 `Target` 和 `Adaptee` 交互的类。它实现了 `Target` 接口，并在内部包装了 `Adaptee` 的一个实例。适配器接收所有 `Target` 接口的调用，并将它们转换为 `Adaptee` 接口的调用。
+    ```typescript
+    // src/adapter-pattern/adapter/alipay-adapter.ts
+    export class AlipayAdapter implements PaymentProcessor {
+      private readonly alipayService: AlipayService;
+
+      constructor(alipayService: AlipayService) {
+        this.alipayService = alipayService;
+      }
+
+      public pay(amount: number): void {
+        const currentUser = 'user_123';
+        const amountInCents = amount * 100;
+        // 将调用转换为被适配者的方法
+        this.alipayService.makePayment(currentUser, amountInCents);
+      }
+    }
+    ```
+
+4.  **客户端 (Client)**: (`processPayment` 函数)
+    *   与实现了 `Target` 接口的对象进行交互，而不知道其具体实现。
+    ```typescript
+    // src/adapter-pattern/index.ts
+    function processPayment(processor: PaymentProcessor, amount: number) {
+      console.log('Client: Processing a payment...');
+      processor.pay(amount);
+    }
+
+    // 客户端可以无缝地使用旧服务...
+    const payPalService = new PayPalService();
+    processPayment(payPalService, 150);
+
+    // ...也可以使用通过适配器包装的新服务。
+    const alipayAdapter = new AlipayAdapter(new AlipayService());
+    processPayment(alipayAdapter, 200);
+    ```
 
 ## 优点
 

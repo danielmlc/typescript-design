@@ -21,15 +21,76 @@
 
 1.  **主题 (Subject)**: (`Subject` 接口)
     *   定义了管理观察者的接口：`registerObserver` (注册), `removeObserver` (移除), 和 `notifyObservers` (通知)。
+    ```typescript
+    // src/observer-pattern/subject/Subject.ts
+    export interface Subject {
+        registerObserver(o: Observer): void;
+        removeObserver(o: Observer): void;
+        notifyObservers(): void;
+    }
+    ```
 
 2.  **观察者 (Observer)**: (`Observer` 接口)
-    *   定义了所有具体观察者必须实现的更新接口，通常是一个 `update` 方法。当主题的状态发生变化时，这个方法会被调用。
+    *   定义了所有具体观察者必须实现的更新接口，通常是一个 `update` 方法。
+    ```typescript
+    // src/observer-pattern/observer/Observer.ts
+    export interface Observer {
+        update(temp: number, humidity: number, pressure: number): void;
+    }
+    ```
 
 3.  **具体主题 (Concrete Subject)**: (`WeatherData` 类)
     *   实现了主题接口。它维护着自身的状态，并在状态改变时通知所有注册的观察者。
+    ```typescript
+    // src/observer-pattern/subject/WeatherData.ts
+    export class WeatherData implements Subject {
+        private observers: Observer[] = [];
+        private temperature: number;
+        // ... other properties
 
-4.  **具体观察者 (Concrete Observer)**: (`CurrentConditionsDisplay`, `StatisticsDisplay` 类)
-    *   实现了观察者接口。每个观察者都注册到一个具体主题上，以接收更新。当它的 `update` 方法被调用时，它会执行相应的操作（比如更新自己的显示）。
+        public registerObserver(o: Observer): void {
+            this.observers.push(o);
+        }
+
+        public notifyObservers(): void {
+            for (const observer of this.observers) {
+                observer.update(this.temperature, this.humidity, this.pressure);
+            }
+        }
+
+        public setMeasurements(temperature: number, humidity: number, pressure: number): void {
+            this.temperature = temperature;
+            // ... set other properties
+            this.notifyObservers(); // Notify observers when state changes
+        }
+    }
+    ```
+
+4.  **具体观察者 (Concrete Observer)**: (`CurrentConditionsDisplay` 类)
+    *   实现了观察者接口。当它的 `update` 方法被调用时，它会执行相应的操作。
+    ```typescript
+    // src/observer-pattern/observer/CurrentConditionsDisplay.ts
+    export class CurrentConditionsDisplay implements Observer, DisplayElement {
+        private temperature: number;
+        private humidity: number;
+        private weatherData: Subject;
+
+        constructor(weatherData: Subject) {
+            this.weatherData = weatherData;
+            weatherData.registerObserver(this); // Register itself with the subject
+        }
+
+        public update(temperature: number, humidity: number, pressure: number): void {
+            this.temperature = temperature;
+            this.humidity = humidity;
+            this.display(); // Update its display when state changes
+        }
+
+        public display(): void {
+            console.log(`Current conditions: ${this.temperature}F degrees and ${this.humidity}% humidity`);
+        }
+    }
+    ```
 
 ## 优点
 

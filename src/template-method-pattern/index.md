@@ -14,21 +14,53 @@
 
 其中，第 1 步和第 3 步是完全相同的。但第 2 步和第 4 步对于茶和咖啡来说是不同的。
 
-如果为 `Tea` 和 `Coffee` 类分别编写完整的制作流程，会导致大量重复代码（烧水、倒水）。
-
 模板方法模式通过创建一个抽象的 `CaffeineBeverage` 基类来解决这个问题。这个基类包含一个 `prepareRecipe()` 方法，这个方法就是“模板方法”，它以正确的顺序调用了上述所有四个步骤。其中，“烧水”和“倒水”被实现为具体的、通用的方法，而“冲泡” (`brew`) 和“加调料” (`addCondiments`) 则被声明为抽象方法，强制子类（如 `Tea` 和 `Coffee`）去提供自己的实现。
-
-这样一来，算法的整体结构被固定在父类中，而易于变化的部分则被优雅地委托给了子类。
 
 ## 结构
 
 1.  **抽象类 (Abstract Class)**: (`CaffeineBeverage` 类)
-    *   包含一个“模板方法” (`prepareRecipe`)，该方法定义了算法的骨架。
-    *   模板方法会调用一系列抽象的“原语操作”（如 `brew`）和具体的、通用的操作（如 `boilWater`）。
+    *   包含一个“模板方法” (`prepareRecipe`)，该方法定义了算法的骨架。它调用了一系列抽象的“原语操作”（如 `brew`）和具体的、通用的操作（如 `boilWater`）。
+    ```typescript
+    // src/template-method-pattern/caffeine-beverage.ts
+    export abstract class CaffeineBeverage {
+        // 这是模板方法
+        public prepareRecipe(): void {
+            this.boilWater();
+            this.brew(); // 调用由子类实现的抽象方法
+            this.pourInCup();
+            this.addCondiments(); // 调用由子类实现的抽象方法
+        }
+
+        // 通用方法
+        private boilWater(): void {
+            console.log("Boiling water");
+        }
+
+        private pourInCup(): void {
+            console.log("Pouring into cup");
+        }
+
+        // “原语”操作，由子类实现
+        protected abstract brew(): void;
+        protected abstract addCondiments(): void;
+    }
+    ```
 
 2.  **具体类 (Concrete Class)**: (`Tea`, `Coffee` 类)
-    *   继承自抽象类。
-    *   实现了父类中定义的抽象原语操作，以完成算法中特定于子类的步骤。
+    *   继承自抽象类，并实现了父类中定义的抽象原语操作。
+    ```typescript
+    // src/template-method-pattern/tea.ts
+    export class Tea extends CaffeineBeverage {
+        // 实现冲泡茶叶的逻辑
+        protected brew(): void {
+            console.log("Steeping the tea");
+        }
+        // 实现加柠檬的逻辑
+        protected addCondiments(): void {
+            console.log("Adding Lemon");
+        }
+    }
+    ```
 
 ## 优点
 

@@ -25,6 +25,31 @@
 3.  **公有静态访问方法 (Public Static Access Method)**:
     *   一个公有的静态方法（通常命名为 `getInstance()`），它作为获取单例实例的全局访问点。该方法会检查实例是否已被创建，如果尚未创建，则会调用私有构造函数创建一个实例并保存；如果已经存在，则直接返回该实例。
 
+下面是 `Settings` 类的核心实现：
+```typescript
+// src/singleton-pattern/settings.ts
+export class Settings {
+    // 1. 持有类唯一实例的静态成员变量
+    private static instance: Settings;
+
+    // 2. 私有化构造函数，防止外部通过 `new` 创建实例
+    private constructor() {
+        console.log("Settings instance created. Initializing settings...");
+    }
+
+    // 3. 提供一个全局访问点来获取这个唯一的实例
+    public static getInstance(): Settings {
+        if (!Settings.instance) {
+            Settings.instance = new Settings();
+        }
+        return Settings.instance;
+    }
+
+    // ... 其他业务方法
+    public get(key: string): string | undefined { /* ... */ }
+}
+```
+
 ## 优点
 
 *   **保证单一实例**: 确保一个类只有一个实例，避免了多个实例可能导致的状态冲突。

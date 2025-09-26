@@ -8,31 +8,63 @@
 
 ## 场景
 
-想象一下，你在设计一个鸭子模拟游戏。游戏里有各种各样的鸭子，比如绿头鸭 (`MallardDuck`)、红头鸭 (`RedheadDuck`)，甚至还有橡皮鸭 (`RubberDuck`) 和诱饵鸭 (`DecoyDuck`)。
+想象一下，你在设计一个鸭子模拟游戏。游戏里有各种各样的鸭子，比如绿头鸭 (`MallardDuck`)。它们的飞行 (`fly`) 和呱呱叫 (`quack`) 行为却各不相同。
 
-所有的鸭子都会游泳 (`swim`) 和展示自己的外观 (`display`)。但它们的飞行 (`fly`) 和呱呱叫 (`quack`) 行为却各不相同：
-*   绿头鸭会飞，也会呱呱叫。
-*   诱饵鸭不会飞，也不会叫。
-*   橡皮鸭不会飞，但会吱吱叫。
+如果使用继承来实现，每当行为发生变化时，都可能需要创建新的子类，这会导致代码僵化且难以维护。
 
-如果使用继承来实现，你可能会在 `Duck` 基类中加入 `fly()` 和 `quack()` 方法。但这样一来，橡皮鸭也会继承 `fly()` 方法，这显然是不对的。你可以通过在子类中重写这些方法来解决，但这会导致代码重复，并且缺乏灵活性（比如，你无法在运行时改变一只鸭子的行为）。
-
-策略模式通过将这些行为从 `Duck` 类中抽离出来，封装成独立的“行为”对象（策略），来完美地解决这个问题。我们创建 `FlyBehavior` 和 `QuackBehavior` 两个接口，以及一系列实现了这些接口的具体策略类（如 `FlyWithWings`, `FlyNoWay`, `Quack`, `Squeak`）。
+策略模式通过将这些行为从 `Duck` 类中抽离出来，封装成独立的“行为”对象（策略），来完美地解决这个问题。我们创建 `FlyBehavior` 和 `QuackBehavior` 两个接口，以及一系列实现了这些接口的具体策略类（如 `FlyWithWings`, `FlyNoWay`）。
 
 `Duck` 类不再自己实现这些行为，而是持有两个指向行为对象的引用。当需要执行飞行或呱呱叫时，它只是简单地将任务“委托”给相应的行为对象。这样一来，我们就可以通过在构造时传入不同的行为对象，或者在运行时调用 `set` 方法，来轻松地改变任何一只鸭子的行为。
 
 ## 结构
 
-1.  **策略 (Strategy)**: (`FlyBehavior`, `QuackBehavior` 接口)
-    *   定义了所有支持的算法的通用接口。上下文（`Duck`）使用这个接口来调用由具体策略定义的算法。
+1.  **策略 (Strategy)**: (`FlyBehavior` 接口)
+    *   定义了所有支持的算法的通用接口。
+    ```typescript
+    // src/strategy-pattern/FlyBehavior/FlyBehavior.ts
+    export interface FlyBehavior {
+       fly(): void;
+    }
+    ```
 
-2.  **具体策略 (Concrete Strategy)**: (`FlyWithWings`, `Squeak` 等类)
+2.  **具体策略 (Concrete Strategy)**: (`FlyWithWings` 类)
     *   实现了策略接口，封装了具体的算法或行为。
+    ```typescript
+    // src/strategy-pattern/FlyBehavior/FlyWithWings.ts
+    export class FlyWithWings implements FlyBehavior {
+        public fly(): void {
+            console.log("I'm flying!");
+        }
+    }
+    ```
 
 3.  **上下文 (Context)**: (`Duck` 抽象类)
     *   持有一个对策略对象的引用。
     *   它不直接执行行为，而是将工作委托给链接的策略对象。
     *   它提供一个 `set` 方法，允许客户端在运行时替换策略。
+    ```typescript
+    // src/strategy-pattern/Duck.ts
+    export abstract class Duck {
+        protected quackBehavior: QuackBehavior;
+        protected flyBehavior: FlyBehavior;
+
+        constructor(quackBehavior: QuackBehavior, flyBehavior: FlyBehavior) {
+            this.quackBehavior = quackBehavior;
+            this.flyBehavior = flyBehavior;
+        }
+
+        // 将飞行行为委托给策略对象
+        public performFly(): void {
+            this.flyBehavior.fly();
+        }
+
+        // 在运行时改变飞行行为
+        public setFlyBehavior(fb: FlyBehavior): void {
+            this.flyBehavior = fb;
+        }
+        // ... a similar structure for quack behavior
+    }
+    ```
 
 ## 优点
 
