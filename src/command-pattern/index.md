@@ -14,30 +14,79 @@
 
 命令模式通过引入“命令”对象来解决这个问题。我们将每一个请求（如“开灯”）都封装成一个具体的命令类（如 `LightOnCommand`）。这个命令对象持有一个对真正执行操作的对象（“接收者”，如 `Light` 实例）的引用。
 
-遥控器（调用者）只持有一个 `Command` 接口的引用。当一个按钮被按下时，遥控器只管调用这个命令对象的 `execute()` 方法，而完全不需要知道这个命令具体会做什么，也不需要知道接收者是谁。这样一来，我们就可以在不修改遥-控器代码的情况下，动态地给按钮分配任何新的命令，实现了完美的解耦。
+遥控器（调用者）只持有一个 `Command` 接口的引用。当一个按钮被按下时，遥控器只管调用这个命令对象的 `execute()` 方法，而完全不需要知道这个命令具体会做什么，也不需要知道接收者是谁。这样一来，我们就可以在不修改遥控器代码的情况下，动态地给按钮分配任何新的命令，实现了完美的解耦。
 
 ## 结构
 
 1.  **命令 (Command)**: (`Command` 接口)
     *   通常只声明一个执行方法，如 `execute()`。
+    ```typescript
+    // src/command-pattern/command/command.ts
+    export interface Command {
+        execute(): void;
+    }
+    ```
 
-2.  **具体命令 (Concrete Command)**: (`LightOnCommand`, `GarageDoorOpenCommand` 等类)
-    *   实现了 `Command` 接口。
-    *   持有一个对“接收者”对象的引用。
-    *   `execute()` 方法的实现会调用接收者对象的一个或多个方法来完成请求。
+2.  **接收者 (Receiver)**: (`Light`, `GarageDoor` 类)
+    *   包含了真正的业务逻辑。它知道如何实施和执行一个请求，但它并不知道命令的存在。
+    ```typescript
+    // src/command-pattern/receiver/light.ts
+    export class Light {
+        public on(): void {
+            console.log("Light is On");
+        }
+        public off(): void {
+            console.log("Light is Off");
+        }
+    }
+    ```
 
-3.  **调用者 (Invoker)**: (`SimpleRemoteControl` 类)
-    *   持有一个 `Command` 对象。
-    *   调用者不直接创建命令对象，而是通过客户端代码来设置。
-    *   调用者只负责在适当的时候调用命令的 `execute()` 方法。
+3.  **具体命令 (Concrete Command)**: (`LightOnCommand` 等类)
+    *   实现了 `Command` 接口，并将一个接收者对象绑定于自身的动作之上。
+    *   当 `execute()` 被调用时，它会调用接收者的相应方法。
+    ```typescript
+    // src/command-pattern/command/light-on-command.ts
+    export class LightOnCommand implements Command {
+        private light: Light; // A reference to the receiver
 
-4.  **接收者 (Receiver)**: (`Light`, `GarageDoor` 类)
-    *   包含了真正的业务逻辑。它知道如何实施和执行一个请求。
-    *   任何类都可以作为一个接收者。
+        constructor(light: Light) {
+            this.light = light;
+        }
 
-5.  **客户端 (Client)**: (`index.ts` 中的 `runSmartHomeSimulation` 函数)
-    *   负责创建接收者、具体命令，并将命令与接收者关联起来。
-    *   最后，将配置好的命令对象设置给调用者。
+        public execute(): void {
+            this.light.on(); // The command delegates the action to the receiver
+        }
+    }
+    ```
+
+4.  **调用者 (Invoker)**: (`SimpleRemoteControl` 类)
+    *   持有一个 `Command` 对象，并让它在需要时执行。调用者不关心命令的具体实现。
+    ```typescript
+    // src/command-pattern/invoker/simple-remote-control.ts
+    export class SimpleRemoteControl {
+        private slot: Command;
+
+        public setCommand(command: Command): void {
+            this.slot = command;
+        }
+
+        public buttonWasPressed(): void {
+            this.slot.execute(); // The invoker just calls execute()
+        }
+    }
+    ```
+
+5.  **客户端 (Client)**: (`index.ts`)
+    *   负责创建接收者、具体命令，并将命令与接收者关联起来。最后，将配置好的命令对象设置给调用者。
+    ```typescript
+    // src/command-pattern/index.ts
+    const remote = new SimpleRemoteControl();
+    const light = new Light("Living Room");
+    const lightOn = new LightOnCommand(light);
+
+    remote.setCommand(lightOn);
+    remote.buttonWasPressed(); // Outputs: "Living Room light is On"
+    ```
 
 ## 优点
 

@@ -20,18 +20,76 @@
 
 1.  **组件 (Component)**: (`MenuComponent` 抽象类)
     *   为组合中的所有对象（叶子和组合）声明一个统一的接口。
-    *   实现了对子组件进行访问和管理的默认行为。
+    ```typescript
+    // src/iterator-and-composite-pattern/component/menu-component.ts
+    export abstract class MenuComponent {
+        // ... methods for adding, removing, getting children
+        // ... methods for getting name, description, price, etc.
+        public abstract print(): void;
+        public abstract createIterator(): CustomIterator<MenuComponent>;
+    }
+    ```
 
 2.  **叶子 (Leaf)**: (`MenuItem` 类)
     *   表示组合中的叶子对象，叶子没有子节点。
-    *   在组合中定义了基本对象的行为。
+    ```typescript
+    // src/iterator-and-composite-pattern/component/menu-item.ts
+    export class MenuItem extends MenuComponent {
+        // ... properties: name, description, etc.
+        public print(): void {
+            console.log(`  ${this.getName()}...`);
+        }
+        // Leaf nodes return a NullIterator
+        public createIterator(): CustomIterator<MenuComponent> {
+            return new NullIterator();
+        }
+    }
+    ```
 
 3.  **组合 (Composite)**: (`Menu` 类)
-    *   定义了有子节点的那些组件的行为。
-    *   存储子组件，并实现了与子组件相关的操作（如 `add`, `remove`）。
+    *   定义了有子节点的那些组件的行为，并存储子组件。
+    ```typescript
+    // src/iterator-and-composite-pattern/component/menu.ts
+    export class Menu extends MenuComponent {
+        private menuComponents: MenuComponent[] = [];
+        // ... properties: name, description
+
+        public add(menuComponent: MenuComponent): void {
+            this.menuComponents.push(menuComponent);
+        }
+
+        public print(): void {
+            console.log(`\n${this.getName()}, ${this.getDescription()}`);
+            console.log("---------------------");
+            // Recursively call print on children
+            for (const menuComponent of this.menuComponents) {
+                menuComponent.print();
+            }
+        }
+
+        // Composite nodes return an iterator for their children
+        public createIterator(): CustomIterator<MenuComponent> {
+            return new CompositeIterator(this.menuComponents);
+        }
+    }
+    ```
 
 4.  **客户端 (Client)**: (`Waitress` 类)
-    *   通过组件接口来操纵组合中的对象。
+    *   通过组件接口来操纵组合中的对象，无需关心它是叶子还是组合。
+    ```typescript
+    // src/iterator-and-composite-pattern/waitress.ts
+    export class Waitress {
+        private allMenus: MenuComponent;
+
+        constructor(allMenus: MenuComponent) {
+            this.allMenus = allMenus;
+        }
+
+        public printMenu(): void {
+            this.allMenus.print(); // Single call prints the entire tree
+        }
+    }
+    ```
 
 ## 迭代器模式 (Iterator Pattern)
 
@@ -49,15 +107,46 @@
 
 1.  **迭代器 (Iterator)**: (`CustomIterator` 接口)
     *   定义了遍历元素所需的操作接口（如 `next`, `hasNext`）。
+    ```typescript
+    // src/iterator-and-composite-pattern/iterator/iterator.ts
+    export interface CustomIterator<T> {
+        hasNext(): boolean;
+        next(): T;
+    }
+    ```
 
-2.  **具体迭代器 (Concrete Iterator)**: (`CompositeIterator`, `NullIterator` 类)
+2.  **具体迭代器 (Concrete Iterator)**: (`CompositeIterator` 类)
     *   实现了迭代器接口，并负责跟踪聚合对象的当前遍历位置。
+    ```typescript
+    // src/iterator-and-composite-pattern/iterator/composite-iterator.ts
+    export class CompositeIterator implements CustomIterator<MenuComponent> {
+        private items: MenuComponent[];
+        private position: number = 0;
+        // ... constructor and methods
+    }
+    ```
 
 3.  **聚合 (Aggregate)**: (`MenuComponent` 接口)
     *   定义了创建迭代器对象的接口。
+    ```typescript
+    // src/iterator-and-composite-pattern/component/menu-component.ts
+    export abstract class MenuComponent {
+        // ...
+        public abstract createIterator(): CustomIterator<MenuComponent>;
+    }
+    ```
 
 4.  **具体聚合 (Concrete Aggregate)**: (`Menu` 类)
     *   实现了聚合接口，并返回一个与其内部数据结构相对应的具体迭代器的实例。
+    ```typescript
+    // src/iterator-and-composite-pattern/component/menu.ts
+    export class Menu extends MenuComponent {
+        // ...
+        public createIterator(): CustomIterator<MenuComponent> {
+            return new CompositeIterator(this.menuComponents);
+        }
+    }
+    ```
 
 ## 如何运行示例
 
