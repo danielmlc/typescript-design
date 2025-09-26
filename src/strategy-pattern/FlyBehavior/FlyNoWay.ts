@@ -1,7 +1,7 @@
-import { FlyBehavior } from './FlyBehavior'
+import { FlyBehavior } from './FlyBehavior';
+
 export class FlyNoWay implements FlyBehavior {
-    fly(){
-        console.log('我是一只不会飞的笨鸭子。')
-    };
- }
- 
+    public fly(): void {
+        console.log("I can't fly.");
+    }
+}
