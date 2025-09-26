@@ -21,18 +21,55 @@
 
 ## 结构
 
-1.  **外观 (Facade)**: (`ComputerFacade` 类)
-    *   知道哪些子系统负责处理一个请求。
-    *   将客户端的请求代理给适当的子系统对象。
-    *   它不直接参与业务逻辑，其唯一职责是封装复杂性。
+1.  **子系统 (Subsystem)**: (`CPU`, `Memory`, `HardDrive` 类)
+    *   实现复杂的底层功能，但并不知道外观的存在。
+    ```typescript
+    // src/facade-pattern/subsystem/cpu.ts
+    export class CPU {
+      public freeze(): void { /* ... */ }
+      public jump(position: number): void { /* ... */ }
+      public execute(): void { /* ... */ }
+    }
+    // ... other subsystem classes like Memory and HardDrive
+    ```
 
-2.  **子系统 (Subsystem)**: (`CPU`, `Memory`, `HardDrive` 类)
-    *   实现复杂的底层功能。
-    *   处理由 `Facade` 对象指派的工作。
-    *   它们不了解外观的存在，可以在没有外观的情况下独立工作。
+2.  **外观 (Facade)**: (`ComputerFacade` 类)
+    *   知道哪些子系统负责处理一个请求，并将客户端的请求代理给适当的子系统对象。
+    ```typescript
+    // src/facade-pattern/facade/computer-facade.ts
+    export class ComputerFacade {
+      protected cpu: CPU;
+      protected memory: Memory;
+      protected hardDrive: HardDrive;
+
+      constructor() {
+        this.cpu = new CPU();
+        this.memory = new Memory();
+        this.hardDrive = new HardDrive();
+      }
+
+      public start(): void {
+        console.log("Computer starting...");
+        this.cpu.freeze();
+        const bootData = this.hardDrive.read(/* ... */);
+        this.memory.load(/* ... */, bootData);
+        this.cpu.jump(/* ... */);
+        this.cpu.execute();
+        console.log("Computer started successfully!");
+      }
+    }
+    ```
 
 3.  **客户端 (Client)**: (`clientCode` 函数)
     *   通过调用 `Facade` 的方法来与子系统进行交互，从而将自己与子系统的复杂性隔离开来。
+    ```typescript
+    // src/facade-pattern/index.ts
+    function clientCode() {
+      // 客户端只需要与外观类交互。
+      const computer = new ComputerFacade();
+      computer.start();
+    }
+    ```
 
 ## 优点
 

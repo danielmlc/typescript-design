@@ -18,16 +18,53 @@
 
 1.  **产品 (Product)**: (`Transport` 接口)
     *   定义了工厂方法所创建的对象的接口。
+    ```typescript
+    // src/factory-method-pattern/transport/transport.ts
+    export interface Transport {
+      deliver(): void;
+    }
+    ```
 
 2.  **具体产品 (Concrete Product)**: (`Truck`, `Ship` 类)
     *   实现了产品接口，是工厂方法实际创建的对象。
+    ```typescript
+    // src/factory-method-pattern/transport/truck.ts
+    export class Truck implements Transport {
+      public deliver(): void {
+        console.log('Delivering by land in a box.');
+      }
+    }
+    ```
 
 3.  **创建者 (Creator)**: (`Logistics` 抽象类)
     *   声明了工厂方法 `createTransport()`，该方法返回一个产品对象。
     *   创建者还可以定义一个调用工厂方法的核心业务逻辑方法（如 `planDelivery`）。
+    ```typescript
+    // src/factory-method-pattern/creator/logistics.ts
+    export abstract class Logistics {
+      // 这是抽象的工厂方法
+      public abstract createTransport(): Transport;
+
+      public planDelivery(): void {
+        // 调用工厂方法来创建一个 Transport 对象
+        const transport = this.createTransport();
+        // 使用这个 transport 来执行运输
+        transport.deliver();
+      }
+    }
+    ```
 
 4.  **具体创建者 (Concrete Creator)**: (`RoadLogistics`, `SeaLogistics` 类)
     *   重写（实现）工厂方法，以返回一个具体产品的实例。
+    ```typescript
+    // src/factory-method-pattern/creator/road-logistics.ts
+    export class RoadLogistics extends Logistics {
+      // 实现工厂方法，返回一个 Truck 实例
+      public createTransport(): Transport {
+        return new Truck();
+      }
+    }
+    ```
 
 ## 优点
 

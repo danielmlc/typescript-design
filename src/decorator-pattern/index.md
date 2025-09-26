@@ -20,15 +20,86 @@
 
 1.  **组件 (Component)**: (`Beverage` 抽象类)
     *   定义了被装饰的原始对象和装饰器共有的接口。
+    ```typescript
+    // src/decorator-pattern/Component/Beverage.ts
+    export abstract class Beverage {
+        protected description: string = 'Unknown Beverage';
+
+        public getDescription(): string {
+            return this.description;
+        }
+
+        public abstract cost(): number;
+    }
+    ```
 
 2.  **具体组件 (Concrete Component)**: (`Espresso` 类)
-    *   实现了组件接口，是被装饰的原始对象。可以有多个。
+    *   实现了组件接口，是被装饰的原始对象。
+    ```typescript
+    // src/decorator-pattern/Component/Espresso.ts
+    export class Espresso extends Beverage {
+        constructor() {
+            super();
+            this.description = "Espresso";
+        }
+
+        public cost(): number {
+            return 1.99;
+        }
+    }
+    ```
 
 3.  **装饰器 (Decorator)**: (`CondimentDecorator` 抽象类)
-    *   同样实现了组件接口，并持有一个对组件对象的引用（通过 `has-a` 关系）。它将所有请求都转发给被包装的组件。其主要目的是为所有具体的装饰器定义一个统一的接口。
+    *   同样实现了组件接口，并持有一个对组件对象的引用（通过 `has-a` 关系）。
+    ```typescript
+    // src/decorator-pattern/Decorator/CondimentDecorator.ts
+    export abstract class CondimentDecorator extends Beverage {
+        // This is the object we are decorating
+        protected beverage: Beverage;
 
-4.  **具体装饰器 (Concrete Decorator)**: (`Milk`, `Whip`, `Mocha` 类)
-    *   实现了装饰器，并为组件动态添加了新的行为或状态。它们在调用父类方法（即转发请求）之前或之后，执行自己额外的逻辑（如增加成本、添加描述）。
+        // We need to reimplement getDescription() in the decorator
+        public abstract getDescription(): string;
+    }
+    ```
+
+4.  **具体装饰器 (Concrete Decorator)**: (`Milk`, `Whip` 等类)
+    *   为组件动态添加了新的行为或状态。它们在调用父类方法（即转发请求）之前或之后，执行自己额外的逻辑。
+    ```typescript
+    // src/decorator-pattern/Decorator/Milk.ts
+    export class Milk extends CondimentDecorator {
+        constructor(beverage: Beverage) {
+            super();
+            this.beverage = beverage;
+        }
+
+        public getDescription(): string {
+            // Add "Milk" to the description of the beverage we're decorating
+            return this.beverage.getDescription() + ', Milk';
+        }
+
+        public cost(): number {
+            // Add the cost of milk to the cost of the beverage
+            return .10 + this.beverage.cost();
+        }
+    }
+    ```
+5.  **客户端 (Client)**: (`index.ts`)
+    *   客户端代码通过层层包装来动态地构建对象。
+    ```typescript
+    // src/decorator-pattern/index.ts
+    // Start with a plain Espresso
+    let espresso: Beverage = new Espresso();
+
+    // Wrap it with Milk
+    espresso = new Milk(espresso);
+
+    // Wrap it with Whip
+    espresso = new Whip(espresso);
+
+    // Get the final description and cost
+    console.log(espresso.getDescription() + ' $' + espresso.cost());
+    // Outputs: Espresso, Milk, Whip $2.29
+    ```
 
 ## 优点
 
