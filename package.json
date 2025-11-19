@@ -8,7 +8,7 @@
     "prettier": "prettier src -l \"./**/*\"",
     "prettier:fix": "prettier src --write -l \"./**/*\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc src/decorator-pattern/index.ts",
+    "build": "npx tsc --noEmit",
     "dev": "nodemon src/decorator-pattern/index.js"
   },
   "keywords": [

@@ -6,29 +6,109 @@
 
 简而言之，它允许你在运行时，根据不同的情况，选择一个对象应该如何执行某个特定的行为。
 
-## 场景
-
-想象一下，你在设计一个鸭子模拟游戏。游戏里有各种各样的鸭子，比如绿头鸭 (`MallardDuck`)。它们的飞行 (`fly`) 和呱呱叫 (`quack`) 行为却各不相同。
-
-如果使用继承来实现，每当行为发生变化时，都可能需要创建新的子类，这会导致代码僵化且难以维护。
-
-策略模式通过将这些行为从 `Duck` 类中抽离出来，封装成独立的“行为”对象（策略），来完美地解决这个问题。我们创建 `FlyBehavior` 和 `QuackBehavior` 两个接口，以及一系列实现了这些接口的具体策略类（如 `FlyWithWings`, `FlyNoWay`）。
-
-`Duck` 类不再自己实现这些行为，而是持有两个指向行为对象的引用。当需要执行飞行或呱呱叫时，它只是简单地将任务“委托”给相应的行为对象。这样一来，我们就可以通过在构造时传入不同的行为对象，或者在运行时调用 `set` 方法，来轻松地改变任何一只鸭子的行为。
-
 ## 结构
 
-1.  **策略 (Strategy)**: (`FlyBehavior` 接口)
-    *   定义了所有支持的算法的通用接口。
+```mermaid
+classDiagram
+    class Duck {
+        <<Abstract>>
+        -flyBehavior : FlyBehavior
+        -quackBehavior : QuackBehavior
+        +performFly()
+        +performQuack()
+        +setFlyBehavior(fb: FlyBehavior)
+        +setQuackBehavior(qb: QuackBehavior)
+        +display()*
+        +swim()
+    }
+
+    class MallardDuck {
+        +display()
+    }
+
+    class FlyBehavior {
+        <<Interface>>
+        +fly()
+    }
+
+    class FlyWithWings {
+        +fly()
+    }
+
+    class FlyNoWay {
+        +fly()
+    }
+
+    class QuackBehavior {
+        <<Interface>>
+        +quack()
+    }
+
+    class Quack {
+        +quack()
+    }
+
+    class Squeak {
+        +quack()
+    }
+    
+    class MuteQuack {
+        +quack()
+    }
+
+    Duck <|-- MallardDuck
+    Duck o-- FlyBehavior
+    Duck o-- QuackBehavior
+    FlyBehavior <|.. FlyWithWings
+    FlyBehavior <|.. FlyNoWay
+    QuackBehavior <|.. Quack
+    QuackBehavior <|.. Squeak
+    QuackBehavior <|.. MuteQuack
+```
+
+## 场景：鸭子模拟器
+
+想象一下，你正在开发一款**超级鸭子模拟器**游戏。
+
+一开始，你用继承的方式，让所有鸭子都继承自一个 `Duck` 父类，并在父类里写了 `fly()` 和 `quack()` 方法。
+一切看起来都很美好，直到有一天，产品经理要求加一种**橡皮鸭 (Rubber Duck)**。
+
+😱 **问题出现了**：
+橡皮鸭继承了 `Duck` 类，结果它竟然会在天上飞（因为它继承了 `fly`）！这简直是灾难。
+
+🤔 **尝试解决**：
+你可能会想：“那我覆盖橡皮鸭的 `fly` 方法，让它什么都不做不就好了？”
+但是，如果以后又要加**诱饵鸭 (Decoy Duck)**（既不会飞也不会叫），或者**火箭鸭**（飞得超快），你难道要每一个都去覆盖、去修改吗？如果飞行逻辑变了，你得去每一个子类里改代码，这简直是维护噩梦！
+
+💡 **策略模式来拯救**：
+策略模式告诉你：**把变化的部分拿出来，独立封装。**
+
+在这个例子中，**飞行**和**叫声**是会变化的。
+1.  我们把“飞行”抽象成一个接口 `FlyBehavior`。
+2.  想要怎么飞？造具体的类：`FlyWithWings`（用翅膀飞）、`FlyNoWay`（不会飞）、`FlyRocketPowered`（火箭飞）。
+3.  鸭子类 `Duck` 不再亲自实现飞行，而是**持有**一个 `FlyBehavior` 对象。
+4.  想飞的时候，鸭子就喊一声：“嘿，那个谁（FlyBehavior），帮我飞一下！”
+
+这样一来，鸭子就像是**装备了不同的技能卡片**。
+*   绿头鸭装备了 `FlyWithWings` 卡片。
+*   橡皮鸭装备了 `FlyNoWay` 卡片。
+*   最酷的是，你甚至可以在游戏运行时，按一个按钮，瞬间把一只不会飞的鸭子变成火箭鸭（通过 `setFlyBehavior` 换一张卡片）！
+
+这就是策略模式的魅力：**组合优于继承**，让算法（行为）可以独立于使用它的客户（鸭子）而变化。
+
+## 代码解析
+
+1.  **策略接口 (Strategy Interface)**: (`FlyBehavior`, `QuackBehavior`)
+    *   定义了所有支持的算法的公共接口。
     ```typescript
     // src/strategy-pattern/FlyBehavior/FlyBehavior.ts
     export interface FlyBehavior {
-       fly(): void;
+        fly(): void;
     }
     ```
 
-2.  **具体策略 (Concrete Strategy)**: (`FlyWithWings` 类)
-    *   实现了策略接口，封装了具体的算法或行为。
+2.  **具体策略 (Concrete Strategy)**: (`FlyWithWings` 等)
+    *   实现了策略接口，封装了具体的算法。
     ```typescript
     // src/strategy-pattern/FlyBehavior/FlyWithWings.ts
     export class FlyWithWings implements FlyBehavior {
@@ -41,7 +121,7 @@
 3.  **上下文 (Context)**: (`Duck` 抽象类)
     *   持有一个对策略对象的引用。
     *   它不直接执行行为，而是将工作委托给链接的策略对象。
-    *   它提供一个 `set` 方法，允许客户端在运行时替换策略。
+    *   它提供 `set` 方法，允许客户端在运行时“换装备”（替换策略）。
     ```typescript
     // src/strategy-pattern/Duck.ts
     export abstract class Duck {
@@ -62,16 +142,16 @@
         public setFlyBehavior(fb: FlyBehavior): void {
             this.flyBehavior = fb;
         }
-        // ... a similar structure for quack behavior
+        // ... quack behavior 同理
     }
     ```
 
 ## 优点
 
-*   **开闭原则**: 你可以在不修改现有上下文或策略代码的情况下，轻松地引入新的策略。
-*   **代码复用**: 你可以避免在多个上下文类中重复相同的逻辑，而是将它封装在一个策略中。
-*   **松耦合**: 将算法的定义与使用它的上下文分离开来，降低了它们之间的耦合。
-*   **运行时灵活性**: 可以轻松地在运行时切换算法（策略）。
+*   **灵活切换**: 可以在运行时动态改变对象的行为（就像换装备一样）。
+*   **易于扩展**: 增加新的行为（比如“喷气式飞行”），只需要加一个新的策略类，完全不需要修改现有的鸭子类，符合**开闭原则**。
+*   **避免多重条件判断**: 消除了代码中大量的 `if...else` 或 `switch` 语句。
+*   **复用性强**: 不同的鸭子可以共用同一个飞行策略类。
 
 ## 如何运行示例
 

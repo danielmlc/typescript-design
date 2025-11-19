@@ -1,39 +1,43 @@
 "use strict";
-exports.__esModule = true;
-var WeatherData = /** @class */ (function () {
-    function WeatherData() {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WeatherData = void 0;
+class WeatherData {
+    constructor() {
+        this.temperature = 0;
+        this.humidity = 0;
+        this.pressure = 0;
         this.observers = [];
     }
-    WeatherData.prototype.registerObserver = function (o) {
+    registerObserver(o) {
         // 注册
         this.observers.push(o);
-    };
-    WeatherData.prototype.removeObserver = function (o) {
+    }
+    removeObserver(o) {
         // 移除
-        var objIndex = 0;
-        this.observers.forEach(function (item, index) {
+        let objIndex = -1;
+        this.observers.forEach((item, index) => {
             if (item.observerName === o.observerName) {
                 objIndex = index;
             }
         });
-        this.observers.splice(objIndex, 1);
-    };
-    WeatherData.prototype.notifyObservers = function () {
-        var _this = this;
+        if (objIndex >= 0) {
+            this.observers.splice(objIndex, 1);
+        }
+    }
+    notifyObservers() {
         // 通知
-        this.observers.forEach(function (item) {
-            item.update(_this.temperature, _this.humidity, _this.pressure);
+        this.observers.forEach((item) => {
+            item.update(this.temperature, this.humidity, this.pressure);
         });
-    };
-    WeatherData.prototype.measurementsChanged = function () {
+    }
+    measurementsChanged() {
         this.notifyObservers();
-    };
-    WeatherData.prototype.setMeasurements = function (temperature, humidity, pressure) {
+    }
+    setMeasurements(temperature, humidity, pressure) {
         this.temperature = temperature;
         this.humidity = humidity;
         this.pressure = pressure;
         this.measurementsChanged();
-    };
-    return WeatherData;
-}());
+    }
+}
 exports.WeatherData = WeatherData;

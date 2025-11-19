@@ -1,10 +1,10 @@
 "use strict";
-exports.__esModule = true;
-var Espresso_1 = require("./Component/Espresso");
-var Milk_1 = require("./Decorator/Milk");
-var Whip_1 = require("./Decorator/Whip");
-var Mocha_1 = require("./Decorator/Mocha");
-var espresso = new Espresso_1.Espresso();
+Object.defineProperty(exports, "__esModule", { value: true });
+const Espresso_1 = require("./Component/Espresso");
+const Milk_1 = require("./Decorator/Milk");
+const Whip_1 = require("./Decorator/Whip");
+const Mocha_1 = require("./Decorator/Mocha");
+let espresso = new Espresso_1.Espresso();
 console.log(espresso.getDescription() + '$' + espresso.cost());
 // +milk
 espresso = new Milk_1.Milk(espresso);

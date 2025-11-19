@@ -6,23 +6,63 @@
 
 外观模式定义了一个更高层次的接口，使得子系统更容易使用。它将客户端的请求代理给相应的子系统对象，从而隐藏了系统的复杂性。
 
-## 场景
-
-想象一下，你需要编写代码来启动一台计算机。这个过程非常复杂，涉及到与多个硬件组件的交互：
-1.  CPU 需要被初始化和冻结。
-2.  需要从硬盘 (`HardDrive`) 的引导扇区读取数据。
-3.  引导数据需要被加载到内存 (`Memory`) 的特定地址。
-4.  CPU 需要跳转到该内存地址。
-5.  最后，CPU 开始执行指令。
-
-如果让客户端代码直接处理所有这些底层交互，代码会变得非常复杂、混乱，并且与这些底层组件紧密耦合。如果未来任何一个组件的接口发生变化，所有相关的客户端代码都需要修改。
-
-外观模式通过创建一个 `ComputerFacade` 类来解决这个问题。这个类提供一个简单的 `start()` 方法。客户端只需要调用这一个方法，`ComputerFacade` 就会在内部负责协调 `CPU`、`Memory` 和 `HardDrive` 之间的所有复杂交互。客户端代码因此变得非常简洁，并且与底层子系统解耦。
-
 ## 结构
 
+```mermaid
+classDiagram
+    class ComputerFacade {
+        -cpu: CPU
+        -memory: Memory
+        -hardDrive: HardDrive
+        +start()
+    }
+
+    class CPU {
+        +freeze()
+        +jump(position)
+        +execute()
+    }
+
+    class Memory {
+        +load(position, data)
+    }
+
+    class HardDrive {
+        +read(lba, size)
+    }
+
+    ComputerFacade o-- CPU
+    ComputerFacade o-- Memory
+    ComputerFacade o-- HardDrive
+```
+
+## 场景：一键启动
+
+想象一下，你是一个电脑小白，你想玩电脑。
+但是，如果启动电脑需要你手动操作每一个硬件：
+1.  先给 CPU 发个信号：“嘿，冻结一下！”
+2.  然后去硬盘那里：“把引导扇区的数据读出来。”
+3.  再跑到内存那里：“把刚才读的数据写到这个地址去。”
+4.  最后再跑回 CPU：“好了，跳到那个地址开始执行吧！”
+
+😱 **崩溃了**：
+这太复杂了！你只是想玩个扫雷而已，为什么要懂这么多底层指令？而且万一你顺序搞错了，电脑可能直接冒烟。
+
+💡 **外观模式**：
+电脑厂商给你提供了一个**开机按钮（Facade）**。
+你只需要按一下这个按钮（调用 `computer.start()`），剩下的脏活累活（CPU、内存、硬盘的交互）全都在机箱内部自动完成了。
+
+在我们的代码中：
+*   **你** = 客户端代码。
+*   **机箱内部复杂的硬件** = 子系统 (`CPU`, `Memory`, `HardDrive`)。
+*   **开机按钮** = `ComputerFacade`。
+
+外观模式就是给复杂的子系统穿上一层简单、漂亮的外衣，让你用起来更爽。
+
+## 代码解析
+
 1.  **子系统 (Subsystem)**: (`CPU`, `Memory`, `HardDrive` 类)
-    *   实现复杂的底层功能，但并不知道外观的存在。
+    *   这些是干实事的底层工兵。它们功能强大但接口复杂，而且彼此之间可能还有依赖。它们根本不知道“外观”的存在。
     ```typescript
     // src/facade-pattern/subsystem/cpu.ts
     export class CPU {
@@ -30,11 +70,12 @@
       public jump(position: number): void { /* ... */ }
       public execute(): void { /* ... */ }
     }
-    // ... other subsystem classes like Memory and HardDrive
+    // ... 内存和硬盘同理
     ```
 
 2.  **外观 (Facade)**: (`ComputerFacade` 类)
-    *   知道哪些子系统负责处理一个请求，并将客户端的请求代理给适当的子系统对象。
+    *   这就是那个“开机按钮”。它知道如何指挥底下的工兵们协同工作。
+    *   它把复杂的流程封装在一个简单的 `start()` 方法里。
     ```typescript
     // src/facade-pattern/facade/computer-facade.ts
     export class ComputerFacade {
@@ -50,24 +91,24 @@
 
       public start(): void {
         console.log("Computer starting...");
-        this.cpu.freeze();
-        const bootData = this.hardDrive.read(/* ... */);
-        this.memory.load(/* ... */, bootData);
-        this.cpu.jump(/* ... */);
-        this.cpu.execute();
+        this.cpu.freeze(); // 1. 冻结 CPU
+        const bootData = this.hardDrive.read(/* ... */); // 2. 读硬盘
+        this.memory.load(/* ... */, bootData); // 3. 写内存
+        this.cpu.jump(/* ... */); // 4. CPU 跳转
+        this.cpu.execute(); // 5. 执行
         console.log("Computer started successfully!");
       }
     }
     ```
 
 3.  **客户端 (Client)**: (`clientCode` 函数)
-    *   通过调用 `Facade` 的方法来与子系统进行交互，从而将自己与子系统的复杂性隔离开来。
+    *   客户端现在爽了，只需要一行代码就能启动电脑。
     ```typescript
     // src/facade-pattern/index.ts
     function clientCode() {
       // 客户端只需要与外观类交互。
       const computer = new ComputerFacade();
-      computer.start();
+      computer.start(); // 一键启动！
     }
     ```
 

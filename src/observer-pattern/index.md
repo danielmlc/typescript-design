@@ -6,21 +6,70 @@
 
 换句话说，它在对象之间建立一种一对多的依赖关系，当一方改变状态时，所有依赖者都会收到通知并自动更新。
 
-## 场景
-
-想象一个气象站应用。`WeatherData` 对象负责从物理传感器获取最新的气象数据（温度、湿度、气压）。我们希望有多个不同的布告板（`Display`）可以展示这些数据：
-*   一个 `CurrentConditionsDisplay` 只显示当前的温度和湿度。
-*   一个 `StatisticsDisplay` 显示最高、最低和平均温度。
-*   未来可能还会有 `ForecastDisplay` 来预报天气。
-
-如果让 `WeatherData` 对象直接去调用每个布告板的更新方法，那么每当新增一个布告板时，我们都必须去修改 `WeatherData` 的代码。这违反了“开闭原则”，并使 `WeatherData` 与具体的布告板类紧密耦合。
-
-观察者模式解决了这个问题。它将 `WeatherData` 变成一个“主题”（Subject），并提供方法让其他对象（“观察者”）可以订阅或取消订阅它。当 `WeatherData` 的状态更新时，它会遍历其内部的观察者列表，并调用每个观察者的 `update` 方法，而无需关心观察者具体是谁，或者它们会如何处理这些更新。
-
 ## 结构
 
+```mermaid
+classDiagram
+    class Subject {
+        <<Interface>>
+        +registerObserver(o: Observer)
+        +removeObserver(o: Observer)
+        +notifyObservers()
+    }
+
+    class Observer {
+        <<Interface>>
+        +update(temp, humidity, pressure)
+    }
+
+    class WeatherData {
+        -observers: Observer[]
+        -temperature: number
+        -humidity: number
+        -pressure: number
+        +registerObserver(o: Observer)
+        +removeObserver(o: Observer)
+        +notifyObservers()
+        +setMeasurements(t, h, p)
+    }
+
+    class CurrentConditionsDisplay {
+        +update(t, h, p)
+        +display()
+    }
+
+    class StatisticsDisplay {
+        +update(t, h, p)
+        +display()
+    }
+
+    Subject <|.. WeatherData
+    Observer <|.. CurrentConditionsDisplay
+    Observer <|.. StatisticsDisplay
+    WeatherData o-- Observer
+```
+
+## 场景：报纸订阅
+
+想象一下**报社（Subject）**和**订阅者（Observer）**的关系。
+
+1.  **报社**每天印刷报纸。
+2.  **你（订阅者）**向报社订阅了报纸。
+3.  每当有新报纸印出来，报社就会自动把它**送（Notify）**到你家门口。
+4.  如果你不想看了，随时可以**取消订阅**，报社就不再送了。
+5.  报社不管你是谁，是张三还是李四，也不管你是拿报纸来垫桌角还是认真阅读，它只管把报纸送到每一个订阅者手里。
+
+在我们的气象站例子中：
+*   **报社** = `WeatherData`（它持有最新的天气数据）。
+*   **订阅者** = 各种布告板（`CurrentConditionsDisplay`, `StatisticsDisplay`）。
+*   **送报纸** = 调用 `update()` 方法，把数据传过去。
+
+这样，无论以后增加多少种新的布告板（比如“穿衣指数布告板”、“农业气象布告板”），`WeatherData` 的代码都不用改，只需要让新布告板去“订阅”一下就行了。
+
+## 代码解析
+
 1.  **主题 (Subject)**: (`Subject` 接口)
-    *   定义了管理观察者的接口：`registerObserver` (注册), `removeObserver` (移除), 和 `notifyObservers` (通知)。
+    *   这是“报社”的规矩：允许人订阅、取消订阅、以及发通知。
     ```typescript
     // src/observer-pattern/subject/Subject.ts
     export interface Subject {
@@ -31,7 +80,7 @@
     ```
 
 2.  **观察者 (Observer)**: (`Observer` 接口)
-    *   定义了所有具体观察者必须实现的更新接口，通常是一个 `update` 方法。
+    *   这是“订阅者”的规矩：必须有一个“收报纸”的信箱（`update` 方法）。
     ```typescript
     // src/observer-pattern/observer/Observer.ts
     export interface Observer {
@@ -40,13 +89,13 @@
     ```
 
 3.  **具体主题 (Concrete Subject)**: (`WeatherData` 类)
-    *   实现了主题接口。它维护着自身的状态，并在状态改变时通知所有注册的观察者。
+    *   真正的气象数据中心。它有一个小本本（`observers` 数组），记着谁订阅了数据。
+    *   数据一更新，它就遍历小本本，挨个打电话通知。
     ```typescript
     // src/observer-pattern/subject/WeatherData.ts
     export class WeatherData implements Subject {
         private observers: Observer[] = [];
-        private temperature: number;
-        // ... other properties
+        // ...
 
         public registerObserver(o: Observer): void {
             this.observers.push(o);
@@ -57,7 +106,7 @@
                 observer.update(this.temperature, this.humidity, this.pressure);
             }
         }
-
+        
         public setMeasurements(temperature: number, humidity: number, pressure: number): void {
             this.temperature = temperature;
             // ... set other properties
@@ -66,26 +115,24 @@
     }
     ```
 
-4.  **具体观察者 (Concrete Observer)**: (`CurrentConditionsDisplay` 类)
-    *   实现了观察者接口。当它的 `update` 方法被调用时，它会执行相应的操作。
+4.  **具体观察者 (Concrete Observer)**: (`CurrentConditionsDisplay` 等)
+    *   具体的布告板。它在构造函数里就迫不及待地去注册订阅了。
+    *   一旦 `update` 被调用，它就拿到最新数据，然后展示出来。
     ```typescript
     // src/observer-pattern/observer/CurrentConditionsDisplay.ts
-    export class CurrentConditionsDisplay implements Observer, DisplayElement {
-        private temperature: number;
-        private humidity: number;
-        private weatherData: Subject;
-
+    export class CurrentConditionsDisplay implements Observer {
+        // ...
         constructor(weatherData: Subject) {
             this.weatherData = weatherData;
-            weatherData.registerObserver(this); // Register itself with the subject
+            weatherData.registerObserver(this); // 嘿，我要订阅！
         }
 
         public update(temperature: number, humidity: number, pressure: number): void {
             this.temperature = temperature;
             this.humidity = humidity;
-            this.display(); // Update its display when state changes
+            this.display(); // 数据来了，刷新显示！
         }
-
+        
         public display(): void {
             console.log(`Current conditions: ${this.temperature}F degrees and ${this.humidity}% humidity`);
         }

@@ -1,32 +1,17 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-exports.__esModule = true;
-var Condiment_1 = require("./Condiment");
-var Mocha = /** @class */ (function (_super) {
-    __extends(Mocha, _super);
-    function Mocha(beverage) {
-        var _this = _super.call(this) || this;
-        _this.beverage = beverage;
-        return _this;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Mocha = void 0;
+const Condiment_1 = require("./Condiment");
+class Mocha extends Condiment_1.CondimentDecorator {
+    constructor(beverage) {
+        super();
+        this.beverage = beverage;
     }
-    Mocha.prototype.getDescription = function () {
+    getDescription() {
         return this.beverage.getDescription() + ", Mocha";
-    };
-    Mocha.prototype.cost = function () {
+    }
+    cost() {
         return 0.2 + this.beverage.cost();
-    };
-    return Mocha;
-}(Condiment_1.CondimentDecorator));
+    }
+}
 exports.Mocha = Mocha;

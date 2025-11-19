@@ -6,25 +6,58 @@
 
 适配器模式扮演着两个对象之间的中间人角色，它将一个对象的接口转换成客户端预期的另一个接口。这使得原本由于接口不兼容而不能一起工作的类可以协同工作。
 
-## 场景
+## 结构
+
+```mermaid
+classDiagram
+    class PaymentProcessor {
+        <<Interface>>
+        +pay(amount: number)
+    }
+
+    class PayPalService {
+        +pay(amount: number)
+    }
+
+    class AlipayService {
+        +makePayment(user: string, amountInCents: number)
+    }
+
+    class AlipayAdapter {
+        -alipayService: AlipayService
+        +pay(amount: number)
+    }
+
+    PaymentProcessor <|.. PayPalService
+    PaymentProcessor <|.. AlipayAdapter
+    AlipayAdapter o-- AlipayService
+```
+
+## 场景：万能插头
 
 想象一下，你的应用程序中有一个支付模块，它依赖一个定义好的 `PaymentProcessor` 接口来处理所有支付。目前，你系统中的 `PayPalService` 完美地实现了这个接口。
 
 现在，公司决定要接入一个新的支付渠道：支付宝 (`Alipay`)。问题是，支付宝提供的 SDK（我们称之为 `AlipayService`）有着完全不同的接口。例如，它的支付方法叫 `makePayment`，并且需要的参数也和我们的 `pay` 方法不同。
 
-你不能直接去修改第三方的 `AlipayService` 代码，也不想为了这个新的支付方式而修改你所有依赖 `PaymentProcessor` 接口的现有业务逻辑。
+😱 **问题**：
+插头插不进去！你总不能把酒店墙拆了换插座（修改第三方代码），也不能把电脑插头剪了重新接线（修改现有稳定代码）。
 
-这时，适配器模式就派上用场了。你可以创建一个 `AlipayAdapter`，它：
-1.  实现了我们系统所期望的 `PaymentProcessor` 接口。
-2.  在内部“包装”了 `AlipayService` 的实例。
-3.  在其 `pay` 方法的实现中，将收到的标准请求转换为 `AlipayService` 能够理解的格式，然后调用 `AlipayService` 的 `makePayment` 方法。
+💡 **适配器模式**：
+你买了一个**转换插头（Adapter）**。
+*   转换插头的一端是**国标三孔插座**，刚好能插你的电脑。
+*   另一端是**欧标两孔插头**，刚好能插进墙里。
 
-这样一来，你的客户端代码就可以像对待 `PayPalService` 一样对待 `AlipayAdapter`，而无需知道背后复杂的转换逻辑。
+在我们的支付系统中：
+*   **电脑** = 你的业务代码（只认识 `PaymentProcessor.pay()`）。
+*   **墙壁插座** = 支付宝 SDK（只提供 `AlipayService.makePayment()`）。
+*   **转换插头** = `AlipayAdapter`。
 
-## 结构
+你的业务代码只管调用 `pay()`，适配器在中间偷偷地把它“翻译”成支付宝能听懂的 `makePayment()`。
+
+## 代码解析
 
 1.  **目标 (Target)**: (`PaymentProcessor` 接口)
-    *   定义了客户端代码所使用的特定于领域的接口。
+    *   这是我们系统通用的支付接口，所有代码都依赖它。
     ```typescript
     // src/adapter-pattern/target/payment-processor.ts
     export interface PaymentProcessor {
@@ -33,7 +66,7 @@
     ```
 
 2.  **被适配者 (Adaptee)**: (`AlipayService` 类)
-    *   一个现有的类，其接口与 `Target` 接口不兼容。我们无法修改这个类。
+    *   这是第三方提供的支付宝 SDK，它的接口跟我们不一样（方法名不同，参数单位也不同）。我们改不了它的代码。
     ```typescript
     // src/adapter-pattern/adaptee/alipay-service.ts
     export class AlipayService {
@@ -44,7 +77,8 @@
     ```
 
 3.  **适配器 (Adapter)**: (`AlipayAdapter` 类)
-    *   一个可以同时与 `Target` 和 `Adaptee` 交互的类。它实现了 `Target` 接口，并在内部包装了 `Adaptee` 的一个实例。适配器接收所有 `Target` 接口的调用，并将它们转换为 `Adaptee` 接口的调用。
+    *   这就是那个“转换插头”。它实现了我们的 `PaymentProcessor` 接口，所以系统觉得它就是个普通支付方式。
+    *   但实际上，它内部藏了一个 `AlipayService`。当系统调用 `pay` 时，它就转手调用 `AlipayService.makePayment`。
     ```typescript
     // src/adapter-pattern/adapter/alipay-adapter.ts
     export class AlipayAdapter implements PaymentProcessor {
@@ -56,15 +90,15 @@
 
       public pay(amount: number): void {
         const currentUser = 'user_123';
-        const amountInCents = amount * 100;
-        // 将调用转换为被适配者的方法
+        const amountInCents = amount * 100; // 转换参数单位
+        // 转发调用
         this.alipayService.makePayment(currentUser, amountInCents);
       }
     }
     ```
 
 4.  **客户端 (Client)**: (`processPayment` 函数)
-    *   与实现了 `Target` 接口的对象进行交互，而不知道其具体实现。
+    *   它只知道 `PaymentProcessor`，完全不知道背后是 PayPal 还是支付宝。
     ```typescript
     // src/adapter-pattern/index.ts
     function processPayment(processor: PaymentProcessor, amount: number) {
@@ -72,11 +106,11 @@
       processor.pay(amount);
     }
 
-    // 客户端可以无缝地使用旧服务...
+    // 使用旧的 PayPal
     const payPalService = new PayPalService();
     processPayment(payPalService, 150);
 
-    // ...也可以使用通过适配器包装的新服务。
+    // 使用新的支付宝（通过适配器）
     const alipayAdapter = new AlipayAdapter(new AlipayService());
     processPayment(alipayAdapter, 200);
     ```

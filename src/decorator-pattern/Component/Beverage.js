@@ -1,12 +1,12 @@
 "use strict";
-exports.__esModule = true;
-var Beverage = /** @class */ (function () {
-    function Beverage() {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Beverage = void 0;
+class Beverage {
+    constructor() {
         this.description = "Unknown Beverage";
     }
-    Beverage.prototype.getDescription = function () {
+    getDescription() {
         return this.description;
-    };
-    return Beverage;
-}());
+    }
+}
 exports.Beverage = Beverage;

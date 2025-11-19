@@ -1,21 +1,24 @@
 "use strict";
-exports.__esModule = true;
-var StatisticsDisplay = /** @class */ (function () {
-    function StatisticsDisplay(weatherData) {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.StatisticsDisplay = void 0;
+class StatisticsDisplay {
+    constructor(weatherData) {
+        this.temperature = 0;
+        this.humidity = 0;
+        this.pressure = 0;
         this.weatherData = weatherData;
         this.observerName = 'StatisticsDisplay';
         weatherData.registerObserver(this);
     }
-    StatisticsDisplay.prototype.display = function () {
-        var info = "\u3010StatisticsDisplay\u3011Current Conditions:" + this.temperayure + "F degrees and " + this.humidity + "% humidity and " + this.pressure + " pressure";
+    display() {
+        const info = `【StatisticsDisplay】Current Conditions:${this.temperature}F degrees and ${this.humidity}% humidity and ${this.pressure} pressure`;
         console.log(info);
-    };
-    StatisticsDisplay.prototype.update = function (temperature, humidity, pressure) {
-        this.temperayure = temperature;
+    }
+    update(temperature, humidity, pressure) {
+        this.temperature = temperature;
         this.humidity = humidity;
         this.pressure = pressure;
         this.display();
-    };
-    return StatisticsDisplay;
-}());
+    }
+}
 exports.StatisticsDisplay = StatisticsDisplay;

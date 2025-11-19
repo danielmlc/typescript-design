@@ -1,4 +1,4 @@
 export interface Observer {
-    observerName: String;
-    update(temp:Number,humidity:Number,pressure:Number);
+    observerName: string;
+    update (temp: number, humidity: number, pressure: number): void;
 }

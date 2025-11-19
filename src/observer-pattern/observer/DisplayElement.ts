@@ -1,3 +1,3 @@
-export interface DisplayElement{
-    display();
+export interface DisplayElement {
+    display (): void;
 }

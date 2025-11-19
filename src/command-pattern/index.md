@@ -6,20 +6,71 @@
 
 简而言之，命令模式将请求的发起者（调用者）和请求的执行者（接收者）完全解耦。
 
-## 场景
-
-想象一下，你在开发一个智能家居的遥控器应用。这个遥控器上有许多按钮，每个按钮都可以被分配一个不同的功能，比如“打开客厅的灯”、“关闭厨房的灯”或“打开车库门”。
-
-如果遥控器（调用者）的代码直接调用 `LivingRoomLight.on()` 或 `GarageDoor.open()` 这些方法，那么遥控器就会与 `Light` 和 `GarageDoor` 这些具体的类紧密耦合。每当你需要添加一个新的设备（比如一个音响），你就必须去修改遥控器的代码来支持这个新设备，这违反了“开闭原则”。
-
-命令模式通过引入“命令”对象来解决这个问题。我们将每一个请求（如“开灯”）都封装成一个具体的命令类（如 `LightOnCommand`）。这个命令对象持有一个对真正执行操作的对象（“接收者”，如 `Light` 实例）的引用。
-
-遥控器（调用者）只持有一个 `Command` 接口的引用。当一个按钮被按下时，遥控器只管调用这个命令对象的 `execute()` 方法，而完全不需要知道这个命令具体会做什么，也不需要知道接收者是谁。这样一来，我们就可以在不修改遥控器代码的情况下，动态地给按钮分配任何新的命令，实现了完美的解耦。
-
 ## 结构
 
+```mermaid
+classDiagram
+    class Command {
+        <<Interface>>
+        +execute()
+    }
+
+    class LightOnCommand {
+        -light: Light
+        +execute()
+    }
+
+    class GarageDoorOpenCommand {
+        -garageDoor: GarageDoor
+        +execute()
+    }
+
+    class Light {
+        +on()
+        +off()
+    }
+
+    class GarageDoor {
+        +open()
+        +close()
+    }
+
+    class SimpleRemoteControl {
+        -slot: Command
+        +setCommand(c: Command)
+        +buttonWasPressed()
+    }
+
+    Command <|.. LightOnCommand
+    Command <|.. GarageDoorOpenCommand
+    LightOnCommand o-- Light
+    GarageDoorOpenCommand o-- GarageDoor
+    SimpleRemoteControl o-- Command
+```
+
+## 场景：万能遥控器
+
+想象一下，你买了一个**万能遥控器**，上面只有一个按钮。
+你想用它控制家里的所有电器：灯、车库门、音响、甚至电风扇。
+
+1.  **普通做法**：
+    你在遥控器代码里写死：`if (device == light) light.on(); else if (device == garage) garage.open();`
+    这太蠢了！每买一个新家电，你都得拆开遥控器改电路板（修改代码）。
+
+2.  **命令模式做法**：
+    *   **遥控器（Invoker）**：它很傻，它只知道“按下按钮就执行 `slot.execute()`”。它根本不知道那个 `slot` 里装的是什么，也不关心。
+    *   **命令对象（Command）**：这是一个中间层。比如 `LightOnCommand`，它把“灯”和“开灯这个动作”打包在一起。
+    *   **你（Client）**：你负责把“开灯命令”装进遥控器的卡槽里。
+
+当你按下按钮时：
+遥控器喊：“执行！” -> 命令对象收到指令 -> 命令对象转身去按灯的开关 -> 灯亮了。
+
+这样，遥控器和具体的家电就完全解耦了。你可以随时把“开灯卡片”拔出来，换插一张“开车库门卡片”，遥控器代码一行都不用改！
+
+## 代码解析
+
 1.  **命令 (Command)**: (`Command` 接口)
-    *   通常只声明一个执行方法，如 `execute()`。
+    *   所有命令卡片的通用接口。只有一个简单的 `execute` 方法。
     ```typescript
     // src/command-pattern/command/command.ts
     export interface Command {
@@ -28,64 +79,55 @@
     ```
 
 2.  **接收者 (Receiver)**: (`Light`, `GarageDoor` 类)
-    *   包含了真正的业务逻辑。它知道如何实施和执行一个请求，但它并不知道命令的存在。
+    *   真正干活的家电。它们知道怎么开灯、怎么开门。
     ```typescript
     // src/command-pattern/receiver/light.ts
     export class Light {
-        public on(): void {
-            console.log("Light is On");
-        }
-        public off(): void {
-            console.log("Light is Off");
-        }
+        public on(): void { console.log("Light is On"); }
+        public off(): void { console.log("Light is Off"); }
     }
     ```
 
-3.  **具体命令 (Concrete Command)**: (`LightOnCommand` 等类)
-    *   实现了 `Command` 接口，并将一个接收者对象绑定于自身的动作之上。
-    *   当 `execute()` 被调用时，它会调用接收者的相应方法。
+3.  **具体命令 (Concrete Command)**: (`LightOnCommand` 等)
+    *   这就是那张“功能卡片”。它把一个家电（`Light`）和一个动作（`on`）绑定在一起。
     ```typescript
     // src/command-pattern/command/light-on-command.ts
     export class LightOnCommand implements Command {
-        private light: Light; // A reference to the receiver
+        private light: Light;
 
-        constructor(light: Light) {
-            this.light = light;
-        }
+        constructor(light: Light) { this.light = light; }
 
         public execute(): void {
-            this.light.on(); // The command delegates the action to the receiver
+            this.light.on(); // 委托给接收者去执行
         }
     }
     ```
 
 4.  **调用者 (Invoker)**: (`SimpleRemoteControl` 类)
-    *   持有一个 `Command` 对象，并让它在需要时执行。调用者不关心命令的具体实现。
+    *   这就是遥控器。它只持有一个 `Command` 接口。
     ```typescript
     // src/command-pattern/invoker/simple-remote-control.ts
     export class SimpleRemoteControl {
         private slot: Command;
 
-        public setCommand(command: Command): void {
-            this.slot = command;
-        }
+        public setCommand(command: Command): void { this.slot = command; }
 
         public buttonWasPressed(): void {
-            this.slot.execute(); // The invoker just calls execute()
+            this.slot.execute(); // 我不管是谁，反正我执行了
         }
     }
     ```
 
 5.  **客户端 (Client)**: (`index.ts`)
-    *   负责创建接收者、具体命令，并将命令与接收者关联起来。最后，将配置好的命令对象设置给调用者。
+    *   负责组装。把家电、命令、遥控器连起来。
     ```typescript
     // src/command-pattern/index.ts
-    const remote = new SimpleRemoteControl();
-    const light = new Light("Living Room");
-    const lightOn = new LightOnCommand(light);
+    const remote = new SimpleRemoteControl(); // 1. 拿遥控器
+    const light = new Light("Living Room");   // 2. 买个灯
+    const lightOn = new LightOnCommand(light);// 3. 制作“开灯”卡片
 
-    remote.setCommand(lightOn);
-    remote.buttonWasPressed(); // Outputs: "Living Room light is On"
+    remote.setCommand(lightOn); // 4. 把卡片插进遥控器
+    remote.buttonWasPressed();  // 5. 按按钮 -> 灯亮了！
     ```
 
 ## 优点

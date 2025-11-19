@@ -6,108 +6,125 @@
 
 我们的“鸭子模拟器”是一个经典的复合模式示例，它将多个我们之前学习过的模式融合在了一起，以创建一个灵活、可维护且功能丰富的系统。
 
-## 场景：一个功能强大的鸭子模拟器
+## 结构
 
-我们的目标是创建一个鸭子模拟器，它需要满足以下所有需求：
-1.  能模拟各种会叫的实体，不仅仅是鸭子，甚至包括鹅。
-2.  能统计所有鸭子（不包括鸭哨等设备）总共叫了多少次。
-3.  能够将一群鸭子当作一个独立的单位来管理，比如让整群鸭子一起叫。
-4.  能让一个“呱呱叫学家”实时观察到是哪一只鸭子在叫。
-5.  对象的创建过程应该被封装起来，不暴露给客户端。
-
-为了实现这个复杂的系统，我们组合了以下模式：
-
-*   **适配器模式 (Adapter)**
-    *   **角色**: 我们使用 `GooseAdapter` 将一个具有不兼容接口的 `Goose` 对象（它只会 `honk()`）适配成一个 `Quackable` 对象（它会 `quack()`）。这使得我们的系统可以无缝地处理鹅，就像处理鸭子一样。
-    ```typescript
-    // src/compound-pattern/adapter/goose-adapter.ts
-    export class GooseAdapter implements Quackable {
-        private goose: Goose;
-        // ...
-        public quack(): void {
-            // 将 quack() 调用转换为 honk() 调用
-            this.goose.honk();
-            this.notifyObservers();
-        }
-    }
-    ```
-
-*   **装饰器模式 (Decorator)**
-    *   **角色**: 我们使用 `QuackCounter` 装饰器来包装任何 `Quackable` 对象。它在不改变被包装对象代码的情况下，为其增加了“叫声计数”的新功能。
-    ```typescript
-    // src/compound-pattern/decorator/quack-counter.ts
-    export class QuackCounter implements Quackable {
-        private duck: Quackable; // 被包装的鸭子
-        private static numberOfQuacks: number = 0;
-
-        constructor(duck: Quackable) {
-            this.duck = duck;
-        }
-
-        public quack(): void {
-            this.duck.quack(); // 委托给被包装的鸭子
-            QuackCounter.numberOfQuacks++; // 增加新功能
-        }
-        // ...
-    }
-    ```
-
-*   **工厂模式 (Factory)**
-    *   **角色**: 我们使用 `AbstractDuckFactory` 和 `CountingDuckFactory` 来封装对象的创建过程。客户端通过工厂获取鸭子，而无需关心这些鸭子是否被装饰过。
-    ```typescript
-    // src/compound-pattern/factory/counting-duck-factory.ts
-    export class CountingDuckFactory extends AbstractDuckFactory {
-        public createMallardDuck(): Quackable {
-            // 工厂负责用装饰器包装对象
-            return new QuackCounter(new MallardDuck());
-        }
-        // ...
-    }
-    ```
-
-*   **组合模式 (Composite)**
-    *   **角色**: 我们使用 `Flock` 类来将一群 `Quackable` 对象组合成一个单一的 `Quackable`。这使得客户端可以像对待一只鸭子一样，对待一整群鸭子。
-    ```typescript
-    // src/compound-pattern/composite/flock.ts
-    export class Flock implements Quackable {
-        private quackers: Quackable[] = [];
-
-        public add(quacker: Quackable): void {
-            this.quackers.push(quacker);
-        }
-
-        public quack(): void {
-            // 遍历并委托给每一个子组件
-            for (const quacker of this.quackers) {
-                quacker.quack();
-            }
-        }
-        // ...
-    }
-    ```
-
-*   **观察者模式 (Observer)**
-    *   **角色**: 我们让所有的 `Quackable` 对象都成为“可被观察的”。一个 `Quackologist`（观察者）可以注册到任何 `Quackable` 对象上。当鸭子叫的时候，它会通知观察者。
-    ```typescript
-    // src/compound-pattern/duck/mallard-duck.ts
-    export class MallardDuck implements Quackable {
-        // ...
-        public quack(): void {
-            console.log("Quack");
-            this.notifyObservers(); // 通知观察者
-        }
-        // ...
+```mermaid
+classDiagram
+    class Quackable {
+        <<Interface>>
+        +quack()
     }
 
-    // src/compound-pattern/observer/quackologist.ts
-    export class Quackologist implements Observer {
-        public update(duck: QuackObservable): void {
-            console.log(`Quackologist: ${duck.constructor.name} just quacked.`);
-        }
+    class MallardDuck {
+        +quack()
     }
-    ```
 
-这些模式共同协作，形成了一个优雅且强大的解决方案。
+    class GooseAdapter {
+        -goose: Goose
+        +quack()
+    }
+
+    class QuackCounter {
+        -duck: Quackable
+        +quack()
+        +static getQuacks()
+    }
+
+    class Flock {
+        -quackers: Quackable[]
+        +add(Quackable)
+        +quack()
+    }
+
+    class AbstractDuckFactory {
+        <<Abstract>>
+        +createMallardDuck()
+    }
+
+    class CountingDuckFactory {
+        +createMallardDuck()
+    }
+
+    class Quackologist {
+        +update()
+    }
+
+    Quackable <|.. MallardDuck
+    Quackable <|.. GooseAdapter
+    Quackable <|.. QuackCounter
+    Quackable <|.. Flock
+    QuackCounter o-- Quackable
+    Flock o-- Quackable
+    AbstractDuckFactory <|-- CountingDuckFactory
+    CountingDuckFactory ..> QuackCounter : Creates
+    Quackologist ..> Quackable : Observes
+```
+
+## 场景：鸭子复仇者联盟
+
+我们不只是在造一只鸭子，我们是在打造**鸭子界的复仇者联盟**。这个系统复杂到需要动用 5 种设计模式才能搞定：
+
+1.  **适配器模式 (Adapter) - 雷神的锤子**：
+    *   我们有一只**鹅 (Goose)**，它只会 `honk()`。
+    *   但我们的系统只认 `quack()`。
+    *   所以我们给鹅装了个**翻译器 (GooseAdapter)**，让它也能混进鸭子堆里 `quack()`。
+
+2.  **装饰器模式 (Decorator) - 钢铁侠的战衣**：
+    *   我们想统计鸭子叫了多少次。
+    *   我们不修改鸭子本身，而是给每只鸭子穿上一件**智能战衣 (QuackCounter)**。
+    *   这件战衣会记录叫声，然后再让鸭子叫。
+
+3.  **组合模式 (Composite) - 联盟集结**：
+    *   我们不仅要管理单只鸭子，还要管理**一群鸭子 (Flock)**。
+    *   我们希望对“一群鸭子”下令“叫！”，这群鸭子里的每一只都会叫。
+    *   `Flock` 让我们能像操作一只鸭子一样操作一整群鸭子。
+
+4.  **工厂模式 (Factory) - 尼克·弗瑞**：
+    *   为了确保每只新加入的鸭子都穿上了“智能战衣”（被装饰），我们不能直接 `new Duck()`。
+    *   我们建立了一个**兵工厂 (CountingDuckFactory)**。所有鸭子都必须从这里生产，出厂自带计数器。
+
+5.  **观察者模式 (Observer) - 神盾局监控**：
+    *   **呱呱叫学家 (Quackologist)** 想实时监控鸭子的行为。
+    *   每当鸭子叫的时候，都会自动向学家发送信号。
+
+## 代码解析
+
+这个复合模式将上述所有模式融合在一起：
+
+*   **核心接口**: `Quackable`。所有的鸭子、适配器、装饰器、组合体都实现了这个接口。
+*   **适配器**: `GooseAdapter` 实现了 `Quackable`，内部持有 `Goose`。
+*   **装饰器**: `QuackCounter` 实现了 `Quackable`，内部持有 `Quackable`（被装饰者）。
+*   **组合**: `Flock` 实现了 `Quackable`，内部持有 `Quackable[]`（子节点列表）。
+*   **工厂**: `CountingDuckFactory` 负责创建被 `QuackCounter` 包装过的鸭子。
+
+```typescript
+// src/compound-pattern/index.ts 的模拟过程：
+
+// 1. 创建工厂
+const duckFactory = new CountingDuckFactory();
+
+// 2. 创建各种鸭子（自动带计数器）
+const mallard = duckFactory.createMallardDuck();
+const goose = new GooseAdapter(new Goose()); // 适配鹅
+
+// 3. 创建组合（群）
+const flock = new Flock();
+flock.add(mallard);
+flock.add(goose);
+
+// 4. 添加观察者
+const quackologist = new Quackologist();
+flock.registerObserver(quackologist);
+
+// 5. 执行！
+flock.quack(); 
+// 输出：
+// Quackologist: MallardDuck just quacked.
+// Quack
+// Quackologist: GooseAdapter just quacked.
+// Honk
+// Total quacks: 2
+```
 
 ## 如何运行示例
 
