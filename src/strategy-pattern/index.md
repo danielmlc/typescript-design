@@ -66,6 +66,38 @@ classDiagram
     QuackBehavior <|.. MuteQuack
 ```
 
+## 模型交互
+
+以下序列图展示了客户端如何在运行时动态改变鸭子的飞行行为。这直观地体现了策略模式的核心：**行为的动态替换**。
+
+```mermaid
+sequenceDiagram
+    participant User as 客户端 (Client)
+    participant Duck as 绿头鸭 (MallardDuck)
+    participant Wings as 翅膀飞行 (FlyWithWings)
+    participant Rocket as 火箭飞行 (FlyRocketPowered)
+
+    Note over User, Duck: 1. 实例化一只绿头鸭
+    User->>Duck: new MallardDuck()
+    Note right of Duck: 内部初始化：<br/>flyBehavior = new FlyWithWings()
+
+    Note over User, Duck: 2. 鸭子尝试飞行
+    User->>Duck: performFly()
+    Duck->>Wings: fly()
+    Wings-->>Duck: "I'm flying!"
+    Duck-->>User: (飞行完成)
+
+    Note over User, Duck: 3. 运行时改变策略：给鸭子装上火箭！
+    User->>Duck: setFlyBehavior(new FlyRocketPowered())
+    Note right of Duck: 策略更新：<br/>flyBehavior = new FlyRocketPowered()
+
+    Note over User, Duck: 4. 鸭子再次尝试飞行
+    User->>Duck: performFly()
+    Duck->>Rocket: fly()
+    Rocket-->>Duck: "I'm flying with a rocket!"
+    Duck-->>User: (火箭飞行完成)
+```
+
 ## 场景：鸭子模拟器
 
 想象一下，你正在开发一款**超级鸭子模拟器**游戏。
